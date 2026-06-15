@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Country Wellness Check</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:    #2563eb;
+      --blue-lt: #dbeafe;
+      --gray-50: #f9fafb;
+      --gray-100:#f3f4f6;
+      --gray-200:#e5e7eb;
+      --gray-500:#6b7280;
+      --gray-700:#374151;
+      --gray-900:#111827;
+      --red:     #dc2626;
+      --white:   #ffffff;
+
+      --c1: #2563eb;
+      --c2: #16a34a;
+      --c3: #d97706;
+      --c4: #9333ea;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--blue);
+      color: var(--white);
+      padding: 1.5rem 2rem;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header p  { font-size: 0.9rem; opacity: 0.85; margin-top: 0.25rem; }
+
+    /* ── Main layout ── */
+    main { max-width: 1280px; margin: 0 auto; padding: 2rem; }
+
+    /* ── Section card ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray-500);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Country selectors ── */
+    .selectors-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    .selector-slot { position: relative; }
+    .selector-slot label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .selector-input-wrap { position: relative; }
+    .selector-input {
+      width: 100%;
+      padding: 0.55rem 2rem 0.55rem 0.75rem;
+      border: 2px solid var(--gray-200);
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+      background: var(--white);
+    }
+    .selector-input:focus { border-color: var(--blue); }
+    .selector-input.has-value { font-weight: 600; }
+
+    .clear-btn {
+      position: absolute;
+      right: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-500);
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0.1rem 0.2rem;
+      display: none;
+    }
+    .clear-btn:hover { color: var(--red); }
+    .clear-btn.visible { display: block; }
+
+    .slot-color-bar {
+      height: 3px;
+      border-radius: 2px;
+      margin-top: 0.4rem;
+      background: var(--gray-200);
+      transition: background 0.2s;
+    }
+    .selector-slot[data-slot="0"] .slot-color-bar.active { background: var(--c1); }
+    .selector-slot[data-slot="1"] .slot-color-bar.active { background: var(--c2); }
+    .selector-slot[data-slot="2"] .slot-color-bar.active { background: var(--c3); }
+    .selector-slot[data-slot="3"] .slot-color-bar.active { background: var(--c4); }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+    }
+    .dropdown.open { display: block; }
+    .dropdown-item {
+      padding: 0.55rem 0.75rem;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .dropdown-item:hover { background: var(--blue-lt); }
+    .dropdown-empty {
+      padding: 0.55rem 0.75rem;
+      font-size: 0.88rem;
+      color: var(--gray-500);
+    }
+
+    /* ── Year range ── */
+    .year-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .year-row label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+    .year-input {
+      width: 90px;
+      padding: 0.45rem 0.6rem;
+      border: 2px solid var(--gray-200);
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .year-input:focus { border-color: var(--blue); }
+    .year-error {
+      font-size: 0.8rem;
+      color: var(--red);
+      font-weight: 500;
+      display: none;
+    }
+    .year-error.visible { display: block; }
+    .year-hint {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+    }
+
+    /* ── Table ── */
+    #table-container { overflow-x: auto; }
+
+    .kpi-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .kpi-table th, .kpi-table td {
+      padding: 0.6rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .kpi-table thead tr th {
+      background: var(--gray-50);
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--gray-500);
+    }
+    .kpi-table thead tr th.country-th {
+      color: var(--white);
+      border-radius: 0.35rem 0.35rem 0 0;
+      font-size: 0.85rem;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .kpi-table thead tr th.country-th[data-slot="0"] { background: var(--c1); }
+    .kpi-table thead tr th.country-th[data-slot="1"] { background: var(--c2); }
+    .kpi-table thead tr th.country-th[data-slot="2"] { background: var(--c3); }
+    .kpi-table thead tr th.country-th[data-slot="3"] { background: var(--c4); }
+
+    .category-row td {
+      background: var(--gray-100);
+      font-weight: 700;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gray-700);
+      padding: 0.45rem 1rem;
+    }
+    .kpi-label { color: var(--gray-700); }
+    .kpi-value { font-weight: 600; }
+    .kpi-polarity {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--gray-500);
+      margin-top: 1px;
+    }
+    .kpi-year {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--gray-500);
+    }
+    .empty-cell { color: var(--gray-500); }
+
+    .loading-cell {
+      display: inline-block;
+      width: 60px;
+      height: 14px;
+      background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--gray-500);
+    }
+    .empty-state-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty-state p { font-size: 0.95rem; }
+
+    /* ── Charts ── */
+    #charts-container { display: none; }
+    #charts-container.visible { display: block; }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+      gap: 1.5rem;
+    }
+    .chart-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+    }
+    .chart-card h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 0.75rem;
+    }
+    .chart-wrap { position: relative; height: 220px; }
+
+    /* ── Sources ── */
+    .sources-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .sources-table th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      background: var(--gray-50);
+      font-weight: 600;
+      color: var(--gray-700);
+      border-bottom: 2px solid var(--gray-200);
+    }
+    .sources-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--gray-100);
+      color: var(--gray-700);
+    }
+    .sources-table a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+    .sources-table a:hover { text-decoration: underline; }
+    .sources-table .cat-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      background: var(--blue-lt);
+      color: var(--blue);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Country Wellness Check</h1>
+  <p>Compare up to four countries across 11 wellness indicators</p>
+</header>
+
+<main>
+
+  <!-- Country selectors -->
+  <div class="card">
+    <div class="card-title">Select countries (type at least 3 characters)</div>
+    <div class="selectors-row" id="selectors-row">
+      <!-- Populated by app.js -->
+    </div>
+  </div>
+
+  <!-- Year range -->
+  <div class="card">
+    <div class="card-title">Year range (optional — shows trend charts)</div>
+    <div class="year-row">
+      <label for="from-year">From</label>
+      <input type="number" id="from-year" class="year-input" placeholder="e.g. 2010" min="1960" max="2024" />
+      <label for="to-year">To</label>
+      <input type="number" id="to-year" class="year-input" placeholder="e.g. 2023" min="1960" max="2024" />
+      <span class="year-error" id="year-error"></span>
+      <span class="year-hint" id="year-hint">Leave blank to show latest values only</span>
+    </div>
+  </div>
+
+  <!-- KPI table -->
+  <div class="card" id="table-card">
+    <div id="table-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">🌍</div>
+        <p>Select at least one country above to see the wellness comparison.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div id="charts-container">
+    <div class="charts-grid" id="charts-grid"></div>
+  </div>
+
+  <!-- Sources -->
+  <div class="card">
+    <div class="card-title">Data Sources</div>
+    <table class="sources-table" id="sources-table">
+      <thead>
+        <tr>
+          <th>KPI</th>
+          <th>Category</th>
+          <th>Custodian</th>
+          <th>Data Source</th>
+        </tr>
+      </thead>
+      <tbody id="sources-tbody"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
