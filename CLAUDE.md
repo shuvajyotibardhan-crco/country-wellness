@@ -39,7 +39,7 @@ See `/Users/shuvajyotibardhan/Projects/.claude_rules.md` for:
 - Global Deployment Verification Rule (watch CI run after every push)
 
 ## GitHub Repo
-TBD — to be created at first push
+https://github.com/shuvajyotibardhan-crco/country-wellness
 
 ## Firebase Project
-TBD — to be configured at deployment stage
+TBD — to be configured at deployment stage (see T2 manual steps in docs/TASKS.md)
